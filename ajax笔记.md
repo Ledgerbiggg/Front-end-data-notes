@@ -1203,7 +1203,7 @@ id_rsa.pub(公钥文件，需要配置到Github中)
 6.生成SSH key
 打开Git Bash
 粘贴如下的命令，并将your_email@example.com替换为注册Github账号时填写的邮箱:
-ssh-keygen -t rsa-b 4096-C"228664584@qq.com"
+ssh-keygen -t rsa-b 4096-C"12365845@qq.com"
 连续敲击3次回车，即可在C:\Users\用户名文件夹\.ssh目录中生成 id_rsa和id_rsa.pub两个文件
 
 7.配置SSH key
@@ -1213,13 +1213,49 @@ ssh-keygen -t rsa-b 4096-C"228664584@qq.com"
 
 8.检测Github 的SSH key是否配置成功
 1.打开Git Bash，输入如下的命令并回车执行:
-ssh -T gitegithub.com
+ssh -T git@github.com
 2.上述的命令执行成功后，可能会看到如下的提示消息:
 The authenticity of host 'github.com (IP ADDRESS)' can't be established.2 RSA key fingerprint is SHA256:nThbg6XupJWG17E1IGOCspRomTxdCARLviKw6E5SY8.3 Are you sure you want to continue connecting (yes/no)?
 3.输入yes之后，如果能看到类似于下面的提示消息，证明SSH key已经配置成功了:
 Hi usernameh You've successfully authenticated，but GitHub does not
 provide shell access.
 
+
+9.基于SSH将本地仓库上传到Github
+与前者类似
+
+10.将远程仓库克隆到本地
+打开Git Bash，输入如下的命令并回车执行:
+git clone 远程仓库克隆地址
 ```
+## 分支
+```
+1.功能分支
+由于程序员不能直接在 master分支上进行功能的开发，所以就有了功能分支的概念。
+功能分支指的是专门用来开发新功能的分支，它是临时从master主分支上分叉出来的，当新功能开发且测试完毕后，最终需要合并到 master主分支上，如图所示:
+
+2.查看分支
+git branch
+
+3.创建新分支
+git branch 分支名称
+
+4.切换分支
+git checkout 分支名称
+
+5.分支的快速创建和切换
+git checkout -b 分支名称
+
+6.分支合并
+# 切换为main分支
+git checkout main
+# main上面合并分支
+git merge 分支名称
+
+7.删除分支
+git branch -s 分支名称
+
+```
+<img src="img/功能分支.jpg">
 
 
