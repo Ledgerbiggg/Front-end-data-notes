@@ -1252,8 +1252,10 @@ git checkout main
 # main上面合并分支
 git merge 分支名称
 
-7.删除分支
-git branch -s 分支名称
+7.删除分支(不能待在被删除的分支上面)
+git branch -d 分支名称
+
+8.
 
 ```
 <img src="img/功能分支.jpg">
