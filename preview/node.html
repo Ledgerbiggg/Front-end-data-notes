@@ -1,7 +1,7 @@
 <html>
   <head>
 	  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-    <title>i5ting_ztree_toc:node</title>
+    <title>i5ting_ztree_toc:</title>
 		<link href="toc/style/github-bf51422f4bb36427d391e4b75a1daa083c2d840e.css" media="all" rel="stylesheet" type="text/css"/>
 		<link href="toc/style/github2-d731afd4f624c99a4b19ad69f3083cd6d02b81d5.css" media="all" rel="stylesheet" type="text/css"/>
 		<link href="toc/css/zTreeStyle/zTreeStyle.css" media="all" rel="stylesheet" type="text/css"/>
@@ -789,7 +789,323 @@ i5ting_toc是一个可以把 md文档转为 html页面的小工具，使用步�
 # 将i5ting toc安装为全局包
 npm install -g i5ting toc
 # 调用i5ting toc，轻松实现 md转html的功能
-i5ting_toc -f 要转换的md文件路径 -o
+
+</code></pre>
+<h2 id="-">规范的包结构</h2>
+<pre><code>在清楚了包的概念、以及如何下载和使用包之后，接下来，我们深入了解一下包的内部结构。一个规范的包，它的组成结构，必须符合以下3点要求:
+1.包必须以单独的目录而存在
+2.包的顶级目录下要必须包含package.json这个包管理配置文件
+3.package.json 中必须包含name，version，main这三个属性，分别代表包的名字、版本号、包的入口。
+
+</code></pre><h2 id="-">开发自己的包</h2>
+<pre><code class="lang-html">初始化包的基本结构
+新建itheima-tools文件夹，作为包的根目录在itheima-tools文件夹中，新建如下三个文件:
+·package.json(包管理配置文件)
+·index.js(包的入口文件)
+·README.md(包的说明文档)
+
+tip:require()方法导入包的话，只导入包的名称，系统会根据包里的json文件的main属性找到包的入口文件
+
+json:
+{
+    &quot;name&quot;: &quot;yb&quot;,
+    &quot;version&quot;: &quot;1.0.0&quot;,
+    &quot;main&quot;: &quot;index.js&quot;,
+    &quot;description&quot;: &quot;格式化时间,HTMLEscape的功能&quot;,
+    &quot;keywords&quot;: [&quot;yb&quot;, &quot;dataFormat&quot;, &quot;escape&quot;],
+    &quot;license&quot;: &quot;ISC&quot;
+}
+js:
+&lt;script&gt;
+    function dateFormat(date) {
+    const newDate = new Date(date);
+    const y = newDate.getFullYear();
+    const m = padZero(newDate.getMonth() + 1);
+    const d = padZero(newDate.getDate());
+    const hh = padZero(newDate.getHours());
+    const mm = padZero(newDate.getMinutes());
+    const ss = padZero(newDate.getSeconds());
+    return `${y}-${m}-${d}  ${hh}:${mm}:${ss}`
+}
+
+function padZero(n) {
+    n = n &gt; 9 ? n : &#39;0&#39; + n;
+    return n
+}
+//替换特殊字符识别其成为html格式
+function HTMLEscape(htmlStr) {
+    htmlStr = htmlStr.replace(/&lt;|&gt;|&amp;|&quot;/g, match =&gt; {
+        switch (match) {
+            case &#39;&lt;&#39;:
+                return &#39;&amp;lt;&#39;;
+            case &#39;&gt;&#39;:
+                return &#39;&amp;gt;&#39;;
+            case &#39;&quot;&#39;:
+                return &#39;&amp;quot;&#39;;
+            case &#39;&amp;&#39;:
+                return &#39;&amp;amp;&#39;;
+        }
+    })
+    return htmlStr;
+}
+&lt;/script&gt;
+tips：
+实际开发中，会把不同功能的js模块放在不同的js中，分别放进dataFormat.js文件和htmlEscape.js文件，再在其内部暴露出来，index.js再去用require()方法引用dataFormat.js文件和htmlEscape.js文件
+
+编写包的说明文档
+包根目录中的README.md文件，是包的使用说明文档。通过它，我们可以事先把包的使用说明，以 markdown的格式写出来，方便用户参考。
+README文件中具体写什么内容，没有强制性的要求;只要能够清晰地把包的作用、用法、注意事项等描述清楚即可.我们所创建的这个包的README.md文档中，会包含以下6项
+
+内容:
+安装方式、导入方式、格式化时间、转义HTML中的特殊字符、还原HTML 中的特殊字符、开源协议
+
+</code></pre>
+<p>README.md:</p>
+<h2 id="-">安装</h2>
+<pre><code>npm install mypackage
+</code></pre><h2 id="-">导入</h2>
+<pre><code class="lang-js">const mypackage=require(&#39;mypackage&#39;)
+</code></pre>
+<h2 id="-">格式化时间</h2>
+<pre><code class="lang-js">//调用dateFormat对时间进行格式化
+const date=new Date()
+const dtStr=mypackage.dateFormat(date)
+//输出结果 2022-05-03 12:03:05
+console.log(dtStr)
+</code></pre>
+<h2 id="-html-">转义html中的特殊字符</h2>
+<pre><code class="lang-js">//输入一个待转换的字符
+const str = &#39;&lt;h1&gt;你好&lt;/h1&gt;&#39;;
+//使用HTMLEscape方法进行转换
+const newstr = mypackage.HTMLEscape(str);
+//输出结果
+console.log(newstr);
+
+</code></pre>
+<h2 id="j-html-">j还原html中的字符</h2>
+<pre><code class="lang-js">//输入一个待转换的字符
+newstr2 = mypackage.HTMLUnEscape(newstr);
+//输出结果
+console.log(newstr2);
+</code></pre>
+<h2 id="-">开源协议</h2>
+<p>ISC</p>
+<h2 id="-">发布包</h2>
+<pre><code>1.注册一个npm账户
+2.登录npm账号
+npm账号注册完成后，可以在终端中执行npm login命令，依次输入用户名、密码、邮箱后，即可登录成功。
+3.把包发布到npm 上
+将终端切换到包的根目录之后，运行npm publish 命令，即可将包发布到npm上(注意:包名不能雷同)。
+4.删除已发布的包
+运行npm unpublish包名 --force命令，即可从npm删除已发布的包。
+注意:
+1.npm unpublish命令只能删除72小时以内发布的包
+2.npm unpublish 删除的包，在24小时内不允许重复发布
+3.发布包的时候要慎重，尽量不要往npm上发布没有意义的包!
+</code></pre><h2 id="-">优先从缓存中加载</h2>
+<pre><code>模块在第一次加载后会被缓存。这也意味着多次调用require()不会导致模块的代码被执行多次。
+注意:不论是内置模块、用户自定义模块、还是第三方模块，它们都会优先从缓存中加载，从而提高模块的加载效率。
+
+内置模块是由Node.js官方提供的模块，内置模块的加载优先级最高。
+例如，require(&#39;fs&#39;)始终返回内置的fs模块，即使在node modules目录下有名字相同的包也叫做fs。
+
+自定义模块的加载机制
+使用require()加载自定义模块时，必须指定以./或../开头的路径标识符。在加载自定义模块时，如果没有指定./或../这样的路径标识符，则node会把它当作内置模块或第三方模块进行加载。
+
+同时，在使用require()导入自定义模块时，如果省略了文件的扩展名，则 Node.js 会按顺序分别尝试加载以下的文件:
+1.按照确切的文件名进行加载
+2.补全.js扩展名进行加载
+3.补全.json扩展名进行加载
+4.补全.node扩展名进行加载
+5.加载失败，终端报错
+</code></pre><h2 id="-">第三方模块的加载机制</h2>
+<pre><code>如果传递给require()的模块标识符不是一个内置模块，也没有以‘./”或‘./”’开头，则 Node,js会从当前模块的父目录开始。尝试从/node_modules文件夹中加载第三方模块。
+如果没有找到对应的第三方模块，则移动到再上一层父目录中，进行加载，直到文件系统的根目录。
+例如，假设在&#39;C:\Users\itheima\project\foo.js&#39;文件里调用了require(tools&#39;)，则 Node.js 会按以下顺序查找:
+C\Users\itheima\project\node_modulestools
+C\Users\itheima\node_modules\tools
+C\Users\node_modules\tools
+C:\node_modules\tools
+
+目录作为模块后
+当把目录作为模块标识符，传递给require()进行加载的时候，有三种加载方式:
+1.在被加载的目录下查找一个叫做package.json的文件，并寻找 main属性，作为require()加载的入口
+2.如果目录里没有package.json文件，或者main 入口不存在或无法解析，则 Node,js将会试图加载目录下的 index.js 文件。
+3.如果以上两步都失败了，则Node.js 会在终端打印错误消息，报告模块的缺失:Error.Cannot find module &#39;xxx&#39;
+
+</code></pre><h2 id="express">express</h2>
+<pre><code>1.什么是 Express
+官方给出的概念: Express是基于Node.js 平台，快速、开放、极简的Web开发框架。
+通俗的理解: Express的作用和Node.js内置的 http模块类似，是专门用来创建Web 服务器的。Express的本质:就是一个npmg上的第三方包，提供了快速创建Web 服务器的便捷方法。
+</code></pre><p><a href="http://www.expressjs.com.cn/">Express的中文官网</a></p>
+<h2 id="express-">Express能做什么</h2>
+<pre><code>对于前端程序员来说，最常见的两种服务器，分别是:
+·Web 网站服务器:专门对外提供 Web 网页资源的服务器。
+·API接口服务器:专门对外提供API接口的服务器。
+使用Express，我们可以方便、快速的创建Web网站的服务器或API接口的服务器。
+</code></pre><h2 id="-get-post-">监听get,post请求</h2>
+<pre><code class="lang-html">通过app.get()方法，可以监听客户端的GET请求，具体的语法格式如下:
+&lt;script&gt;
+app.get(&#39;请求URL&#39;, function(req,res) {/*处理函数*/})
+//通过app.post()方法，可以监听客户端的GET请求，具体的语法格式如下:
+app.post(&#39;请求URL&#39;, function(req,res) {/*处理函数*/})
+//把内容响应给客户端
+&lt;/script&gt;
+&lt;script&gt;
+//通过res.send()方法，可以把处理好的内容，发送给客户端:
+app.get(&#39;/user&#39;, (req. res) =&gt;{
+    //向客户端发送JSON对象
+res.send({ name: &#39;zs &#39;, age: 20，gender: &#39;男&#39;})
+
+app.post(&#39;/user&#39;,(req,res)=&gt;{
+    //向客户端发送文本内容
+res.send(&#39;请求成功&#39;)})
+&lt;/script&gt;
+
+</code></pre>
+<h2 id="-url-">获取URL中携带的查询参数</h2>
+<pre><code class="lang-html">通过req.query对象，可以访问到客户端通过查询字符串的形式，发送到服务器的参数:
+&lt;script&gt;
+app.get(&#39;/&#39;, (req,res)=&gt;{
+    //req.query默认是一个空对象
+    //客户端使用name=zs&amp;age=20这种查询字符串形式，发送到服务器的参数,
+    //可以通过req.query对象访问到，例如:
+    // req.query.name  req.query.age
+    console.log(req.query)})
+&lt;/script&gt;
+
+</code></pre>
+<h2 id="-url-">获取URL中的动态参数</h2>
+<pre><code class="lang-html">通过req.params对象，可以访问到URL中，通过:匹配到的动态参数:
+
+&lt;script&gt;
+    // URL地址中可以通过:参数名的形式，匹配动态参数值
+app.get(&#39;/user/:id/:name&#39;,(req，res) =&gt;{//id不是固定写法，冒号是固定写法
+//req.params默认是一个空对象
+//里面存放着通过:动态匹配到的参数值
+console.log(req.params)；
+res.send(req.params)
+//http://127.0.0.1/user/9  res返回Json格式的{id=9,name:&#39;zs&#39;}
+})
+&lt;/script&gt;
+
+</code></pre>
+<h2 id="express-static-">express.static()</h2>
+<pre><code class="lang-html">express提供了一个非常好用的函数，叫做express.static()，通过它，我们可以非常方便地创建一个静态资源服务器
+例如，通过如下代码就可以将public目录下的图片、CSS文件、JavaScript 文件对外开放访问了:
+&lt;script&gt;
+app.use(express.static(&#39;public&#39;))
+
+// 现在，你就可以访问public目录中的所有文件了
+// http://localhost:3000/images/bg.jpg
+// http://localhost:3000/css/style.css
+// http://localhost:3000/js/login.js
+
+// 注意:Express在指定的静态目录中查找文件，并对外提供资源的访问路径。因此，存放静态文件的目录名不会出现在 URL中。
+
+&lt;/script&gt;
+</code></pre>
+<h2 id="-">托管多个静态资源目录</h2>
+<pre><code>如果要托管多个静态资源目录，请多次调用express.static()函数:
+app.use(express.static(&#39;public&#39;))
+app.use(express.static(&#39;files&#39;))
+
+访问静态资源文件时，express.static()函数会根据目录的添加顺序查找所需的文件。找到了就不会找下一个静态资源目录
+</code></pre><h2 id="-">挂载路径前缀</h2>
+<pre><code class="lang-html">如果希望在托管的静态资源访问路径之前，挂载路径前缀，则可以使用如下的方式:
+&lt;script&gt;
+app. use(&#39;/public&#39;,express.static(&#39;public&#39;))
+&lt;/script&gt;
+现在，你就可以通过带有/public前缀地址来访问public 目录中的文件了:
+http://localhost:3000/public/images/kitten.jpg
+http://localhost:3000/public/css/style.css
+http://localhost:3000/publicljs/app.js
+
+</code></pre>
+<h2 id="nodemon">nodemon</h2>
+<pre><code>使用nodemon
+当基于Nodejs编写了一个网站应用的时候,传统的方式，是运行node app.,js命令来启动项目。这样做的坏处是:代码被修改之后，需要手动重启项目。
+现在，我们可以将node命令替换为nodemon命令,使用nodemon app.js来启动项目。这样做的好处是:代码被修改之后，会被nodemon 监听到，从而实现自动重启项目的效果。
+
+node app.js
+#将上面的终瑞命令，替换为下面的终端命令，即可实现自动重启项目的效果nodemon app.js
+
+</code></pre><h2 id="express-">Express 中的路由</h2>
+<pre><code class="lang-html">在Express中，路由指的是客户端的请求与服务器处理函数之间的映射关系。
+Express 中的路由分3部分组成，分别是请求的类型、请求的URL地址、处理函数，格式如下:
+&lt;script&gt;
+    app.METHOD(PATH，HANDLER)
+&lt;/script&gt;
+</code></pre>
+<h2 id="-">路由的匹配过程</h2>
+<pre><code class="lang-html">每当一个请求到达服务器之后，需要先经过路由的匹配，只有匹配成功之后，才会调用对应的处理函数。
+在匹配时，会按照路由的顺序进行匹配，如果请求类型和请求的URL同时匹配成功，则 Express 会将这次请求，转交给对应的function函数进行处理。
+
+1.最简单的用法(用的不多，代码越多挂载越多，文件体积过大)
+在Express 中使用路由最简单的方式，就是把路由挂载到app 上，示例代码如下:
+&lt;script&gt;
+    app.get(&#39;/&#39;,(req,res)=&gt;{
+        fn()
+    })
+&lt;/script&gt;
+</code></pre>
+<h2 id="-">模块化路由</h2>
+<pre><code>为了方便对路由进行模块化的管理，Express 不建议将路由直接挂载到app上，而是推荐将路由抽离为单独的模块。将路由抽离为单独模块的步骤如下:
+1.创建路由模块对应的.js 文件
+2.调用express.Router()
+3.函数创建路由对象向路由对象上挂载具体的路由
+4.读用module.exports向外共享路由对象
+5.使用app.use()函数注册路由模块
+</code></pre><h2 id="-">创建路由模块</h2>
+<pre><code class="lang-html">&lt;script&gt;
+var express = require(&#39;express&#39;)
+//1．导入express
+var rcter = express.Router()
+//2、创建路由对象,是对象
+router.get( &#39;/user/list&#39;, function (req,res) 
+{ //3．挂载获取用户列表的路由
+res.send( &#39;Get user list.&#39;)}
+)
+router.post(&#39;/user/add&#39;,function (req，res) 
+{//4、挂载添加用户的路由
+res.send(&#39;Add new user.&#39;)}
+)
+module.exports = router;
+//5、向外导出路由对象
+&lt;/script&gt;
+
+&lt;script&gt;
+const express = require(&#39;express&#39;)
+const app = express();
+//导入路由
+const router = require(&#39;./23-模块化路由&#39;)
+//注册路由
+app.use(router)
+//app.use函数就是用来注册全局中间件
+app.listen(80, () =&gt; {
+    console.log(&#39;express server running at http://127.0.0.1&#39;);
+})
+&lt;/script&gt;
+</code></pre>
+<h2 id="-">为路由模块添加前缀</h2>
+<pre><code class="lang-html">类似于托管静态资源时，为静态资源统一挂载访问前缀一样，路由模块添加前缀的方式也非常简单:
+&lt;script&gt;
+app.use(&#39;/api&#39;,router)
+&lt;/script&gt;
+
+</code></pre>
+<h2 id="express-">Express中间件</h2>
+<pre><code class="lang-html">Express中间件的调用流程
+当一个请求到达Express的服务器之后，可以连续调用多个中间件，从而对这次请求进行预处理。
+
+Express中间件的格式
+Express的中间件，本质上就是一个function处理函数，Express中间件的格式如下:
+&lt;script&gt;
+    app.get(&#39;/&#39;,(req,res,next)=&gt;{
+        next()
+    })
+&lt;/script&gt;
+注意:中间件函数的形参列表中，必须包含next 参数。而路由处理函数中只包含req和res,
 
 </code></pre>
 
