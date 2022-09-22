@@ -78,7 +78,7 @@ Windows系统快速打开终端的方式:
 ## 什么是fs 文件系统模块
 ```html
 fs模块是Node.js官方提供的、用来操作文件的模块。它提供了一系列的方法和属性，用来满足用户对文件的操作需求。例如:
-fs.readFile())方法，用来读取指定文件中的内容fs.writeFile()方法，用来向指定的文件中写入内容
+fs.readFile()方法，用来读取指定文件中的内容fs.writeFile()方法，用来向指定的文件中写入内容
 如果要在JavaScript 代码中，使用fs模块来操作文件，则需要使用如下的方式先导入它:
 const fs=require('fs')
 
@@ -1052,7 +1052,13 @@ node app.js
 在Express中，路由指的是客户端的请求与服务器处理函数之间的映射关系。
 Express 中的路由分3部分组成，分别是请求的类型、请求的URL地址、处理函数，格式如下:
 <script>
-    app.METHOD(PATH，HANDLER)
+    const express = require('express');
+    const app = express();
+    app.use('/clicks', express.static('./click'));
+    app.listen(80, () => {
+    console.log('express server running at http://127.0.0.1');
+})
+
 </script>
 ```
 ## 路由的匹配过程
@@ -1130,6 +1136,370 @@ Express的中间件，本质上就是一个function处理函数，Express中间�
     })
 </script>
 注意:中间件函数的形参列表中，必须包含next 参数。而路由处理函数中只包含req和res,
+
+全局生效的中间件
+客户端发起的任何请求，到达服务器之后，都会触发的中间件，叫做全局生效的中间件。
+通过调用app.use(中间件函数)，即可定义一个全局生效的中间件，示例代码如下:
+
+<script>
+const mw = (req, res, next) => {
+    console.log('中间件路由');
+    next();
+}
+app.use(mw)//将mv定义成全局中间件(每次发起请求都要经过mv函数处理数据)
+</script>
+或者
+<script>
+app.use((req, res, next) => {
+    console.log('最简单的中间件函数');
+    next();
+})//将mv定义成全局中间件(每次发起请求都要经过mv函数处理数据)
+</script>
+
+中间件的作用
+多个中间件之间，共享同一份req和res。基于这样的特性，我们可以在上游的中间件中，统一为req或res对象添加自定义的属性或方法，供下游的中间件或路由进行使用。
+
+5.定义多个全局中间件
+可以使用app.use()连续定义多个全局中间件。客户端请求到达服务器之后，会按照中间件定义的先后顺序依次进行调用，示例代码如下:
+<script>
+app.use((req, res, next) => {
+    console.log('定义第一个中间件');
+    next();
+})
+app.use((req, res, next) => {
+    console.log('定义第二个中间件');
+    next();
+})
+</script>
+
+局部生效的中间件
+不使用app.use()定义的中间件，叫做局部生效中间件
+<script>
+const mw = (req, res, next) => {
+    console.log('中间件路由');
+    next();
+}
+app.get('/',mw,(req,res)=>{
+    res.send('get successfully')
+})
+</script>
+
+定义多个局部中间件
+可以在路由中，通过如下两种等价的方式，使用多个局部中间件:
+<script>
+app.get('/',mw,mw1,mw2,(req,res)=>{
+    res.send('get successfully')
+})
+//或者是
+app.get('/',[mw,mw1,mw2],(req,res)=>{
+    res.send('get successfully')
+})
+</script>
+```
+## 使用中间件的注意事项
+```
+·一定要在路由之前注册中间件
+·客户端发送过来的请求，可以连续调用多个中间件进行处理
+·执行完中间件的业务代码之后，不要忘记调用next()函数
+·为了防止代码逻辑混乱，调用next()，函数后不要再写额外的代码
+·连续调用多个中间件时，多个中间件之间，共享req和res 对象
+
+```
+## 中间件的分类
+```html
+1.应用级别的中间件
+通过app.use()或app.get()或 app.post()，绑定到app实例上的中间件，叫做应用级别的中间件，代码示例如下:
+
+<script>
+//应用级别的中间件(全局中间件)
+app. use((req. res, next)=>{
+next()
+})
+
+//应用级别的中间件(局部中间件)
+app.get('/',mw1,(req,res) =>{
+res.send('Home page.')})
+</script>
+
+2.路由级别的中间件
+绑定到express.Router()实例上的中间件，叫做路由级别的中间件。它的用法和应用级别中间件没有任何区别。只不过，应用级别中间件是绑定到app实例上，路由级别中间件绑定到router实例上，代码示例如下;
+<script>
+var app = expresso
+var router =express.Router()
+
+router.use((req,res,next)=>{
+next()
+})
+
+app.use('/',router)
+</script>
+
+错误级别的中间件
+错误级别中间件的作用:专门用来捕获整个项目中发生的异常错误，从而防止项目异常崩溃的问题。
+格式:错误级别中间件的function处理函数中，必须有4个形参，形参顺序从前到后，分别是(err, req, res, next)。
+<script>
+   
+      app.get('/', function (req，res) {
+      throw new Error('服务器内部发生了错误!')//路由的报错消息，会传给错误中间件
+      res.send('Home Page.')}
+    ) 
+       //设置错误中间件(一定要在所有路由之后)
+        app.use(function (err,req,res,next){
+       //错误中间件会收到路由报错然后执行
+        console.log('发生了错误:' + err.message)
+        res.send( "Error! " + err.message)}
+    )
+
+</script>
+
+Express内置的中间件
+自Express 4.16.0版本开始，Express 内置了3个常用的中间件，极大的提高了Express项目的开发效率和体骏
+·express.static快速托管静态资源的内置中间件，例如:HTML文件、图片、CSS样式等(无兼容性)
+·express.json解析JSON格式的请求体数据(有兼容性，仅在4.16.0+版本中可用)
+·express.urlencoded解析URL-encoded格式的请求体数据(有兼容性，仅在4.16.0+版本中可用)
+
+tip:postman 里面需要传给服务器数据，选择body>raw>的text中选择json文件格式
+<script>
+//配置解析applicationljson格式数据的内置中问件
+app.use(express.json())
+//配置解析application/x-ww-form-urlencoded 格式数据的内置中间件
+app.use(express.urlencoded({ extended: false}))
+</script>
+
+第三方的中间件
+非Express官方内置的，而是由第三方开发出来的中间件，叫做第三方中间件。在项目中，大家可以按需下载并配置第三方中间件，从而提高项目的开发效率。
+例如:在express@4.16.0之前的版本中，经常使用body-parser这个第三方中间件，来解析请求体数据。使用步骤如下:
+1.运行 npm install body-parser安装中间件
+2.使用require 导入中间件
+3.调用app.use(注册并使用中间件)
+<script>
+const express = require("express");
+const parser = require('body-parser')
+const app = express();
+//用法和express()类似
+app.use(parser.urlencoded({ extended: false }));
+//用法和express()类似
+app.use(parser.json());
+
+app.post('/', (req, res) => {
+    console.log(req.body);
+})
+app.listen(80, () => {
+    console.log('http://127.0.0.1');
+})
+</script>
+```
+## 自定义中间件
+```html
+1.需求描述与实现步骤
+自己手动模拟一个类似于express.urlencoded这样的中间件，来解析POST提交到服务器的表单数据。
+实现步骤:
+1.定义中间件
+2.监听req的 data事件
+3.监听req的end 事件
+4.使用querystring模块解析请求体数据
+5.将解析出来的数据对象挂载为req.body
+6.将自定义中间件封装为模块
+
+3.监听req的data 事件
+在中间件中，需要监听req对象的data事件，来获取客户端发送到服务器的数据。
+如果数据量比较大，无法一次性发送完毕，则客户端会把数据切割后，分批发送到服务器。所以data事件可能会触发多次，每一次触发data 事件时，获取到数据只是完整数据的一部分，需要手动对接收到的数据进行拼接。
+<script>
+//定义变量，用来存储客户端发送过来的请求体数据
+let dataStr = ''
+//监听req对象的 data 事件(客户端发送过来的新的请求体数据)
+//数据过长，则需要拼接数据字串
+req.on( 'data', (chunk) =>{
+//拼接请求体数据，隐式转换为字符串
+dataStr += chunk
+})
+</script>
+
+4.监听req的end事件
+当请求体数据接收完毕之后，会自动触发req的end事件。
+因此，我们可以在req的end事件中，拿到并处理完整的请求体数据。示例代码如下:
+<script>
+    req.on('end',()=>{
+        req.on('end',()=>{
+        console.log(dataStr);
+    })
+    })
+</script>
+5.使用querystring模块解析请求体数据
+Nodejs 内置了一个querystring 模块，专门用来处理查询字符串。通过这个模块提供的parse()函数，可以轻松把查询字符串，解析成对象的格式。示例代码如下:
+<script>
+//导入处理querystring 的 Node.js内置模块
+const qs = require('node:querystring')
+//调用qs.parse()方法，把查询字符串解析为对象
+const body = qs.parse(str)
+</script>
+6.将解析出来的数据对象挂载为req.body
+上游的中间件和下游的中间件及路由之间，共享同一份req和res。因此，我们可以将解析出来的数据，挂载为req的自定义属性，命名为req.body，供下游使用。示例代码如下:
+<script>
+req.on('end',()=>{
+const body = qs.parse(str)
+//调用qs.parse()方法，把查询字符串解析为对象
+req.body = body
+//将解析出来的请求体对象。挂载为req. body属性
+next()
+//最后，一定要调用next()函数，执行后续的业务逻辑
+//tip!!!!!!next()一定要放在req.end的最后，不然变成异步处理了
+})
+</script>
+
+7.将自定义中间件封装为模块
+为了优化代码的结构，我们可以把自定义的中间件函数，封装为独立的模块，示例代码如下:
+<script>
+//custom-body-parser.js模块中的代码
+const qs = require( " querystring ')
+function bodyParser(req,res,next){ /*省略其它代码*/}
+module.exports = bodyParser 
+//向外导出解析请求体数据的中间件函数
+----------------------------------------
+//导入自定义的中间件模块
+const myBodyParser = require('custom-body-parser')
+//注册自定义的中间件模块
+app.use(myBodyParser)
+</script>
+```
+## 使用express写接口
+```html
+<script>
+    const express = require('express')
+const router = express.Router();
+
+module.exports = {
+    router
+}
+-----------------------------
+const express = require('express')
+
+const app = express();
+const router = require('./33-用express创建路由模块')
+//将路由看成是一个中间件
+app.use('/api', router)
+app.listen(80, () => {
+    console.log('http://127.0.0.1');
+})
+</script>
+```
+## 接口的跨域问题
+```
+刚才编写的GET和POST接口，存在一个很严重的问题:不支持跨域请求。解决接口跨域问题的方案主要有两种:
+CORS(主流的解决方案，推荐使用)
+JSONP(有缺陷的解决方案:只支持GET请求)
+
+使用cors 中间件解决跨域问题
+cors 是 Express的一个第三方中间件。通过安装和配置cors 中间件，可以很方便地解决跨域问题。使用步骤分为如下3步:
+1.运行 npm install cors安装中间件
+2.使用const cors = require('cors')导入中间件
+3.在路由之前调用app.use(cors())配置中间件
+
+什么是CORS
+cORS (Cross-Origin Resource Sharing，跨域资源共享）由一系列HTTP响应头组成，这些HTTP响应头决定浏览器是否阻止前端JS代码跨域获取资源。
+浏览器的同源安全策略默认会阻止网页“跨域”获取资源。但如果接口服务器配置了CORS相关的 HTTP响应头，就可以解除浏览器端的跨域访问限制。
+
+tips:
+1.CORS主要在服务器端进行配置。客户端浏览器无须做任何额外的配置，即可请求开启了CORS的接口。
+2.CORS在浏览器中有兼容性。只有支持XMLHttpRequest Level2的浏览器，才能正常访问开启了CORS的服
+务端接门(例如:IE10+、Chrome4+、FireFox3.5+).
+
+```
+<img src='imgs/cors的原理.jpg'>
+
+## CORS跨域资源共享
+```html
+CORS响应头部– Access-Control-Allow-Origin
+响应头部中可以携带一个 Access-Control-Allow-Origin字段，其语法如下:
+
+<script>
+Access-Control-Allow-origin: <origin>|*
+</script>
+
+//其中，origin参数的值指定了允许访问该资源的外域URL。例如，下面的字段值将只允许来自http://itcast.cn的请求:
+res.setHeader('Access-Control-Allow-Origin','http:/litcast.cn')
+```
+## CORS响应头部- Access-Control-Allow-Headers
+```
+默认情况下，CORS仅支持客户端向服务器发送如下的9个请求头:
+Accept、Accept-Language、Content-Language、DPR、Downlink、Save-Data、Viewport-Width、Width ,Content-Type (值仅限于text/plain、multipart/form-data、application/x-www-form-urlencoded三者之一)如果客户端向服务器发送了额外的请求头信息，则需要在服务器端，通过Access-Control-Allow-Headers 对额外的请求头进行声明，否则这次请求会失败!
+
+res.setHeader('Access-Control-Allow-Headers','Content-Type','X-Custom-Header ')
+```
+## CORS响应头部–Access-Control-Allow-Methods
+```html
+默认情况下，CORS仅支持客户端发起GET、POST、HEAD请求。
+如果客户端希望通过PUT、DELETE等方式请求服务器的资源，则需要在服务器端，通过Access-Control-Alow-Methods来指明实际请求所允许使用的 HTTP方法。
+示例代码如下:
+<script>
+//只允许POST、GET、DELETE、HEAD请求方法
+res.setHeader('Access-Control-Allow-Methods''POST，GET，DELETE，HEAD')
+//允许所有的 HTTP请求方法
+res.setHeader('Access-Control-Allow-Methods','*')
+<script>
+```
+## CORS请求的分类
+```
+客户端在请求CORS接口时，根据请求方式和请求头的不同，可以将CORS的请求分为两大类，分别是:
+简单请求
+预检请求
+
+简单请求
+同时满足以下两大条件的请求，就属于简单请求:
+请求方式:GET、POST、HEAD三者之一
+HTTP头部信息不超过以下几种字段:无自定义头部字段、Accept、Accept-Language、Content-Language、DPR.
+Downlink、Save-Data、Viewport-Width、Width .Content-Type (只有三个值application/x-www-form-
+urlencoded、multipart/form-data、text/plain)
+
+预检请求
+只要符合以下任何一个条件的请求，都需要进行预检请求:
+请求方式为GET、POST、HEAD之外的请求
+Method类型请求头中包含自定义头部字段
+向服务器发送了applicationljson格式的数据
+
+在浏览器与服务器正式通信之前，浏览器会先发送ОPTION请求进行预检，以获知服务器是否允许该实际请求，所以这-次的OPTION请求称为“预检请求”。服务器成功响应预检请求后，才会发送真正的请求，并且携带真实数据。
+
+```
+## 回顾JSONP的概念与特点
+```
+概念:浏览器端通过<script>标签的src属性，请求服务器上的数据，同时，服务器返回一个函数的调用。这种请求数据的方式叫做JSONP。
+特点:
+JSONP不属于真正的Ajax请求，因为它没有使用XMLHttpRequest这个对象。JSONP仅支持GET请求，不支持POST、PUT、DELETE 等请求。
+```
+## JSONP接口
+```
+创建JSONP接口的注意事项
+如果项目中已经配置了CORS跨域资源共享，为了防止冲突，必须在配置CORS中间件之前声明JSONP的接口。否则JSONP接口会被处理成开启了CORS的接口。示例代码如下:
+//优先创建JSONP接口【这个接口不会被处理成CORS接口】
+app.get('/api/jsonp',(req，res) => { })
+//再配置 CORS中间件【后续的所有接口，都会被处理成CORS接口】
+app.use(cors())
+//这是一个开启了CORS的接口
+app.get('/api/get',(req,res) =>{ })
+
+app.get('/api/jsonp' , (req,res) =>{
+    // 获取客户端发送过来的回调函数的名字
+    const funcName = req.query.callback
+    //得到要通过JSONP形式发送给客户端的数据
+    const data = {name:'zs', age: 22 }
+    //根据前两步得到的数据，拼接出一个函数调用的字符串
+    const scriptStr = `${funcName}(JSON.stringify(data))`
+    //把上一步拼接得到的字符串，响应给客户端的<script>标签进行解析执行
+    res.send(scriptstr)
+})
+
+在网页中使用jQuery 发起JSONP请求
+调用$.ajax()函数，提供JSONP的配置选项，从而发起JSONP请求，示例代码如下:
+
+$ ('#btnJSONP').on('click',function () {
+$.ajax({
+method: 'GET'，
+url: 'http://127.0.0.1/api/jsonp',
+dataType: 'jsonp'，
+//表示要发起JSONP的请
+success: function (res) {
+console.log(res)
+}})
 
 ```
 
